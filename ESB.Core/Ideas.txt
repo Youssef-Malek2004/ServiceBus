@@ -1,0 +1,13 @@
+Configure(app.Services);
+
+static void Configure(IServiceProvider hostProvider)
+{
+    using IServiceScope serviceScope = hostProvider.CreateScope();
+    IServiceProvider provider = serviceScope.ServiceProvider;
+    var routesConfigurator = provider.GetRequiredService<RoutesConfigurationService>();
+    
+    Console.WriteLine("Well Done Soldier, Working Beautifully");
+}
+
+This is just to be able to be able to access the RoutesConfigurationService
+//////////////////////////////////////////////// 
