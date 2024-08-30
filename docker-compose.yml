@@ -1,0 +1,15 @@
+﻿services:
+#  esb.core:
+#    image: esb.core
+#    build:
+#      context: .
+#      dockerfile: ESB.Core/Dockerfile
+  rabbitmq3:
+    container_name: "RabbitMQ-Testing"
+    image: rabbitmq:3.13.4-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=myuser
+      - RABBITMQ_DEFAULT_PASS=mypass
+    ports:
+      - "5672:5672"  # RabbitMQ default messaging port
+      - "15672:15672"  # RabbitMQ Management UI

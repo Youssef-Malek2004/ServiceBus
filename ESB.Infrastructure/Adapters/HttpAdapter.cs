@@ -1,13 +1,11 @@
 using ESB.Configurations.Interfaces;
 using ESB.Configurations.Routes;
-using ESB.Core.Interfaces;
 using ESB.Infrastructure.Factories;
-using ESB.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace ESB.Infrastructure.Adapters;
 
-public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpClientFactory httpClientFactory) : IAdapter<HttpRequestMessage, HttpResponseMessage, HttpContext>
+public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpClientFactory httpClientFactory) : IAdapterDi, IAdapter<HttpRequestMessage, HttpResponseMessage, HttpContext>
 {
      private readonly dynamic _apiClient = clientFactory.CreateClient(esbRoute.SendLocation, httpClientFactory);
      
@@ -40,7 +38,7 @@ public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpCl
         await context.Response.WriteAsync(await response.Content.ReadAsStringAsync());
     }
 
-    public static string? GetMethod(SendLocation? sendLocation)
+    private static string? GetMethod(SendLocation? sendLocation)
     {
         if (sendLocation?.HttpEndpoint is not null)
         {
@@ -54,7 +52,7 @@ public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpCl
         throw new Exception("Check Http Method");
     }
 
-    public static string? GetUri(SendLocation? sendLocation)
+    private static string? GetUri(SendLocation? sendLocation)
     {
         if (sendLocation?.HttpEndpoint is not null)
         {

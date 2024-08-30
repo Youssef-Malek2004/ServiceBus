@@ -4,6 +4,7 @@ namespace ESB.Configurations.Routes
     {
         public ReceiveHttpEndpoint? HttpEndpoint { get; set; }
         public ReceiveFtpEndpoint? FtpEndpoint { get; set; }
+        public ReceiveMsgEndpoint? MessageEndpoint { get; set; }
     }
 
     public sealed class SendLocation

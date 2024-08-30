@@ -1,6 +1,6 @@
-namespace ESB.Core.Interfaces;
+namespace ESB.Configurations.Interfaces;
 
-public interface IAdapter<in TRequestMessage, TResponseMessage, TContext>
+public interface IAdapter<in TRequestMessage, TResponseMessage, TContext> 
 {
     void Initialize(); //Initialize basic Configurations
     void Reload(); //Reload Any changes in the Configs

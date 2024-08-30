@@ -1,4 +1,6 @@
-using ESB.Infrastructure.Adapters;
+using System.Collections.Concurrent;
+using ESB.Configurations.Interfaces;
+using ESB.Configurations.Routes;
 using ESB.Infrastructure.Factories;
 using ESB.Infrastructure.Services;
 
@@ -6,26 +8,29 @@ namespace ESB.Core.Middlewares;
 
 public static class CustomMiddlewares
 {
-    public static IApplicationBuilder UseEndpointMapping(this IApplicationBuilder app,
-        RoutesConfigurationService routesConfigurationService)
+    public static IApplicationBuilder AddHttpReceiveEndpoints(this IApplicationBuilder app)
     {
-        app.UseEndpoints(endpoints =>
+        var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        var adapterDictionary = app.ApplicationServices.GetRequiredService<ConcurrentDictionary<EsbRoute, IAdapterDi>>();
+        HelperMiddlewares.AddHttpEndpoints(app, routesConfigurationService, adapterDictionary);
+        
+        return app;
+    }
+
+    public static IApplicationBuilder AddAdapters(this IApplicationBuilder app)
+    {
+        var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        var httpClientFactory = app.ApplicationServices.GetRequiredService<IHttpClientFactory>();
+        var clientFactory = app.ApplicationServices.GetRequiredService<ClientFactory>();
+        var adapterDictionary = app.ApplicationServices.GetRequiredService<ConcurrentDictionary<EsbRoute, IAdapterDi>>();
+        
+        if (routesConfigurationService.RoutesConfiguration.Routes == null) return app;
+        foreach (var route in routesConfigurationService.RoutesConfiguration.Routes)
         {
-            if (routesConfigurationService.RoutesConfiguration.Routes != null)
-                foreach (var route in routesConfigurationService.RoutesConfiguration.Routes)
-                {
-                    var receiveLocation = route.ReceiveLocation.HttpEndpoint;
+            var adapter = AdapterFactory.CreateAdapter(route, httpClientFactory, clientFactory);
+            adapterDictionary.TryAdd(route, adapter);
+        }
 
-                    endpoints.MapGet($"/{receiveLocation.EndpointName}",
-                        async (HttpContext context, IHttpClientFactory httpClientFactory, ClientFactory clientFactory) =>
-                        {
-                            var adapter = new HttpAdapter(route, clientFactory, httpClientFactory);
-
-                            adapter.Initialize();
-                            await adapter.HandleIncomingRequest(context);
-                        });
-                }
-        });
         return app;
     }
 }
