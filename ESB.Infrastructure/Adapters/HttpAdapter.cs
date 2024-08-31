@@ -26,7 +26,7 @@ public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpCl
         return await _apiClient.SendMessageAsync(request);
     }
     
-    public async Task HandleIncomingRequest(HttpContext context)
+    public async Task<string> HandleIncomingRequest(HttpContext context)
     {
         var requestMessage = new HttpRequestMessage(new HttpMethod(GetMethod(esbRoute.SendLocation) ?? string.Empty), GetUri(esbRoute.SendLocation))
         {
@@ -35,7 +35,9 @@ public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpCl
 
         var response = await SendMessageAsync(requestMessage);
         context.Response.StatusCode = (int)response.StatusCode;
-        await context.Response.WriteAsync(await response.Content.ReadAsStringAsync());
+        var responseContent = await response.Content.ReadAsStringAsync();
+        await context.Response.WriteAsync(responseContent); //In Case of a REST to REST
+        return responseContent; // Return it for the Consumer to map it in Bus Consumer
     }
 
     private static string? GetMethod(SendLocation? sendLocation)

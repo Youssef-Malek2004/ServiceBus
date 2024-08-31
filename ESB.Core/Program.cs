@@ -39,7 +39,10 @@ app.MapGet("/", async (IPublishEndpoint publishEndpoint, HttpContext context) =>
 });
 app.MapGet("/route", async (IPublishEndpoint publishEndpoint, HttpContext context) =>
 {
-    await context.Response.WriteAsJsonAsync("Route says hello");
+    await context.Response.WriteAsJsonAsync(new
+    {
+        Num = 5
+    });
 });
 
 app.Run();

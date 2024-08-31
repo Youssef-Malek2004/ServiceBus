@@ -62,6 +62,7 @@ public static class Ioc
                         
                         busConfigurator.AddConsumer(busConsumer);
                     }
+                // busConfigurator.AddConsumer<TestConsumer>(); //Testing the Consumer for Response Message -> Published Successfully
                 
                 busConfigurator.UsingRabbitMq((context, configurator) =>
                 {
