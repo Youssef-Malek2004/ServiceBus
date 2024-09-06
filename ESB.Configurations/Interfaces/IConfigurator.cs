@@ -6,4 +6,5 @@ public interface IConfigurator<out TAbstractConfiguration> // -> To be Injected 
 {
     public TAbstractConfiguration InitializeConfiguration(); //Initialize the Configuration into the Config obj
     public TAbstractConfiguration ReloadConfiguration(); //Reload the Config of the Obj
+    public bool ValidateConfiguration();
 }

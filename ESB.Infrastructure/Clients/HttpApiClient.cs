@@ -1,19 +1,26 @@
 using ESB.Configurations.Interfaces;
-using ESB.Infrastructure.Services;
+using Microsoft.Extensions.Logging;
 
 namespace ESB.Infrastructure.Clients;
 
-public sealed class HttpApiClient(IHttpClientFactory httpClientFactory) : IApiClient<HttpRequestMessage, HttpResponseMessage>
+public sealed class HttpApiClient(IHttpClientFactory httpClientFactory, ILogger<IAdapterDi> logger, IAuthorizer<HttpClient> authorizer) : IApiClient<HttpRequestMessage, HttpResponseMessage>
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
     
-    public void Initialize()
+    public async void Initialize()
     {
-        Console.WriteLine("HttpApiClient initialized");
+        await AuthorizeClient(_httpClient);
+        logger.LogInformation("Successful HttpApiClient Initialization");
+    }
+
+    private async Task AuthorizeClient(HttpClient client)
+    {
+        await authorizer.AuthenticateAsync(client);
     }
 
     public async Task<HttpResponseMessage> SendMessageAsync(HttpRequestMessage requestMessage)
     {
-        return await _httpClient.SendAsync(requestMessage);
+        var response = await _httpClient.SendAsync(requestMessage);
+        return response;
     }
 }

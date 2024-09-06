@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESB.Messages", "ESB.Messages\ESB.Messages.csproj", "{DBE1C214-7025-41BB-AF41-FD70AA4E5E2E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESB.Mockup", "ESB.Mockup\ESB.Mockup.csproj", "{EC4C8B97-F943-4D48-AE02-5D2BB625FBFF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,5 +61,11 @@ Global
 		{DBE1C214-7025-41BB-AF41-FD70AA4E5E2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DBE1C214-7025-41BB-AF41-FD70AA4E5E2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DBE1C214-7025-41BB-AF41-FD70AA4E5E2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC4C8B97-F943-4D48-AE02-5D2BB625FBFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC4C8B97-F943-4D48-AE02-5D2BB625FBFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC4C8B97-F943-4D48-AE02-5D2BB625FBFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC4C8B97-F943-4D48-AE02-5D2BB625FBFF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal

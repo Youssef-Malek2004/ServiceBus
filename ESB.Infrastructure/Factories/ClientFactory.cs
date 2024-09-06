@@ -1,16 +1,17 @@
 using ESB.Configurations.Interfaces;
 using ESB.Configurations.Routes;
 using ESB.Infrastructure.Clients;
+using Microsoft.Extensions.Logging;
 
 namespace ESB.Infrastructure.Factories;
 
 public class ClientFactory
 {
-    public object CreateClient(SendLocation? sendLocation, IHttpClientFactory httpClientFactory) 
+    public object CreateClient(SendLocation? sendLocation, IHttpClientFactory httpClientFactory, ILogger<IAdapterDi> logger, IAuthorizer<HttpClient> authorizer) 
     {
         if (sendLocation?.HttpEndpoint is not null)
         {
-            return new HttpApiClient(httpClientFactory);
+            return new HttpApiClient(httpClientFactory, logger, authorizer); //ToDo pass the correct Authorizer
         }
         else if (sendLocation?.FtpEndpoint is not null)
         {

@@ -1,0 +1,6 @@
+@ESB.Mockup_HostAddress = http://localhost:5172
+
+GET {{ESB.Mockup_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
