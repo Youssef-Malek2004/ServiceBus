@@ -1,9 +1,8 @@
-using ESB.Configurations.Interfaces;
-using ESB.Configurations.Routes;
+using ESB.Application.Interfaces;
+using ESB.Domain.Entities.Routes;
 using ESB.ErrorHandling.CustomExceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace ESB.Infrastructure.Configurators;
 
@@ -16,7 +15,6 @@ public class RoutesConfigurator(IConfiguration configuration, ILogger<RoutesConf
             Routes = configuration.GetSection("Routes").Get<List<EsbRoute>>(),
             DefaultSettings = configuration.GetSection("DefaultSettings").Get<RoutesSettings>()
         };
-        //ToDo validate the configuration
         logger.LogInformation("Successfully Read the Specified Routes!");
         
         return configuredRoutes ?? throw new MajorConfigurationException("Empty Routes Section");
@@ -30,6 +28,6 @@ public class RoutesConfigurator(IConfiguration configuration, ILogger<RoutesConf
 
     public bool ValidateConfiguration()
     {
-        throw new NotImplementedException();
+        return true;
     }
 }

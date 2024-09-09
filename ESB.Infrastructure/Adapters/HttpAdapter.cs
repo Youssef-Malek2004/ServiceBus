@@ -1,15 +1,17 @@
-using ESB.Configurations.Interfaces;
-using ESB.Configurations.Routes;
+using System.Net.Http.Headers;
+using ESB.Application.Interfaces;
+using ESB.Domain.Entities.Routes;
 using ESB.ErrorHandling.CustomExceptions;
 using ESB.Infrastructure.Factories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace ESB.Infrastructure.Adapters;
 
-public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpClientFactory httpClientFactory, ILogger<IAdapterDi> logger, IAuthorizer<HttpClient> authorizer) : IAdapterDi, IAdapter<HttpRequestMessage, HttpResponseMessage, HttpContext>
+public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpClientFactory httpClientFactory, ILogger<IAdapterDi> logger, IAuthorizer<HttpClient> authorizer) : IAdapterDi, IAdapter<HttpRequestMessage, HttpResponseMessage,StringValues, HttpContext>
 {
-     private readonly dynamic _apiClient = clientFactory.CreateClient(esbRoute.SendLocation, httpClientFactory, logger, authorizer); //toDo pass the correct auth
+     private readonly dynamic _apiClient = clientFactory.CreateClient(esbRoute.SendLocation, httpClientFactory, logger, authorizer);
      
     public void Initialize()
     {
@@ -33,24 +35,49 @@ public class HttpAdapter(EsbRoute esbRoute, ClientFactory clientFactory, IHttpCl
         return await _apiClient.SendMessageAsync(request);
     }
 
-    public async Task<string> HandleIncomingRequest(HttpContext context)
+    public async Task<string> HandleIncomingRequest(HttpContext context, StringValues authorization)
     {
         var uriBuilder = new UriBuilder(GetUri(esbRoute.SendLocation) ?? string.Empty)
         {
-            Query = context.Request.QueryString.ToUriComponent() // Append the query string
+            Query = context.Request.QueryString.ToUriComponent()
         };
         
         var requestMessage = new HttpRequestMessage(new HttpMethod(this.GetMethod(esbRoute.SendLocation) ?? string.Empty), uriBuilder.Uri)
         {
             Content = new StringContent(await new StreamReader(context.Request.Body).ReadToEndAsync())
         };
+
+        if (esbRoute.ReceiveLocation.Credentials.AuthorizationType.Equals("Bearer"))
+        {
+            var token = authorization.ToString().Replace("Bearer ", string.Empty); 
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);    
+        }
+        else if (esbRoute.ReceiveLocation.Credentials.AuthorizationType.Equals("Basic"))
+        {
+            var token = authorization.ToString().Replace("Basic ", string.Empty); 
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+        }
+        
         
         var response = await SendMessageAsync(requestMessage);
-        context.Response.StatusCode = (int)response.StatusCode;
-        var responseContent = await response.Content.ReadAsStringAsync();
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync(responseContent); //In Case of a REST to REST
-        return responseContent; // Return it for the Consumer to map it in BusConsumer as a body
+        if (response.IsSuccessStatusCode)
+        {
+            context.Response.StatusCode = (int)response.StatusCode;
+            var responseContent = await response.Content.ReadAsStringAsync();
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(responseContent);
+            return responseContent;
+        }
+        else
+        {
+            logger.LogError("Request on Route :{@RouteId}  failed with status code: {@StatusCode}",
+                esbRoute.Id,
+                response.StatusCode);
+            context.Response.StatusCode = (int)response.StatusCode;
+            var responseContent = await response.Content.ReadAsStringAsync();
+            await context.Response.WriteAsync(responseContent);
+            return "Unauthorized";
+        }
     }
 
     private string? GetMethod(SendLocation? sendLocation)

@@ -1,15 +1,18 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using ESB.Configurations.Interfaces;
-using ESB.Configurations.Routes;
+using ESB.Application.Interfaces;
+using ESB.Domain.Entities.Routes;
 using ESB.ErrorHandling.CustomExceptions;
 using ESB.Infrastructure.Adapters;
 using ESB.Infrastructure.Services;
+using ESB.Messages.Interfaces;
 using MassTransit;
 using MassTransit.Internals;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Polly;
 
 namespace ESB.Infrastructure.Consumers;
 
@@ -17,11 +20,11 @@ public class BusConsumer<TMessage, TResponse>(
     IPublishEndpoint publishEndpoint,
     RoutesConfigurationService routesConfigurationService,
     ConcurrentDictionary<EsbRoute, IAdapterDi> adapterDictionary,
+    ConcurrentDictionary<EsbRoute, ResiliencePipeline> resilienceDictionary,
     ILogger<BusConsumer<TMessage, TResponse>> logger)
     : IBusConsumer<TMessage, TResponse>
-    where TMessage : class
+    where TMessage : class, ICoreMessage
 {
-    //ToDO Validate Config to check  
     private EsbRoute? EsbRoute { get; set; }
 
     public async Task Consume(ConsumeContext<TMessage> context)
@@ -29,7 +32,6 @@ public class BusConsumer<TMessage, TResponse>(
         logger.LogInformation("{@Message} Message Received at {@DateTimeUtc}",
             context.Message,
             DateTime.UtcNow);
-        
         
         if (routesConfigurationService.RoutesConfiguration.Routes != null && EsbRoute is null)
             foreach (var route in routesConfigurationService.RoutesConfiguration.Routes.Where(route => route.ReceiveLocation?.MessageEndpoint is not null))
@@ -45,8 +47,8 @@ public class BusConsumer<TMessage, TResponse>(
 
         if (EsbRoute?.ReceiveLocation?.MessageEndpoint?.Assembly is null) throw new MissingConfigurationException("Assembly Field Empty/Missing", EsbRoute?.Id);
          var currentAssembly = Assembly.Load(EsbRoute.ReceiveLocation.MessageEndpoint.Assembly);
-         if (EsbRoute?.ReceiveLocation?.MessageEndpoint?.ResponseType is null) throw new MissingConfigurationException("Response Type Empty/Missing", EsbRoute?.Id);
-        var myResponseType = currentAssembly.GetType(EsbRoute.ReceiveLocation.MessageEndpoint.ResponseType);
+         if (EsbRoute?.ReceiveLocation?.MessageEndpoint?.CallbackResponseType is null) throw new MissingConfigurationException("Response Type Empty/Missing", EsbRoute?.Id);
+        var myResponseType = currentAssembly.GetType(EsbRoute.ReceiveLocation.MessageEndpoint.CallbackResponseType);
 
         if (myResponseType == null)
             throw new MajorConfigurationException("Response Type couldn't be found in the assembly provided");
@@ -66,10 +68,24 @@ public class BusConsumer<TMessage, TResponse>(
         
         adapterDictionary.TryGetValue(EsbRoute, out var adapter); 
         if (adapter is HttpAdapter httpAdapter)
-        {
-         var jsonContent = await httpAdapter.HandleIncomingRequest(new DefaultHttpContext());
-         JsonConvert.PopulateObject(jsonContent, responseInstance);
-         await (Task)(genericPublishMethod.Invoke(publishEndpoint, new[] { responseInstance, new CancellationToken() })!); 
+        { 
+            resilienceDictionary.TryGetValue(EsbRoute, out var resiliencePipeline);
+            var jsonContent = string.Empty;
+            
+            if (resiliencePipeline != null)
+                await resiliencePipeline.ExecuteAsync(async cancellationToken =>
+                    jsonContent= await httpAdapter.HandleIncomingRequest(new DefaultHttpContext(), new StringValues(context.Message.Authorization)));
+            else
+            {
+                jsonContent = await httpAdapter.HandleIncomingRequest(new DefaultHttpContext(), new StringValues(context.Message.Authorization));
+            }
+
+            if (!jsonContent.Equals("Unauthorized"))
+            {
+                JsonConvert.PopulateObject(jsonContent, responseInstance);
+                await (Task)(genericPublishMethod.Invoke(publishEndpoint,
+                    new[] { responseInstance, new CancellationToken() })!);
+            }
         }
         
         await Task.CompletedTask;

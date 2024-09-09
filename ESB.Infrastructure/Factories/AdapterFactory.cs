@@ -1,5 +1,5 @@
-using ESB.Configurations.Interfaces;
-using ESB.Configurations.Routes;
+using ESB.Application.Interfaces;
+using ESB.Domain.Entities.Routes;
 using ESB.ErrorHandling.CustomExceptions;
 using ESB.Infrastructure.Adapters;
 using Microsoft.Extensions.Logging;
@@ -12,7 +12,7 @@ public static class AdapterFactory
     {
         if (esbRoute.SendLocation?.HttpEndpoint is not null)
         {
-            var adapter = new HttpAdapter(esbRoute, clientFactory, httpClientFactory, adapterLogger, authorizer); //todo pass the correct auth
+            var adapter = new HttpAdapter(esbRoute, clientFactory, httpClientFactory, adapterLogger, authorizer);
             adapter.Initialize();
             return adapter;
         }

@@ -1,4 +1,4 @@
-using ESB.Configurations.Interfaces;
+using ESB.Application.Interfaces;
 using ESB.ErrorHandling.CustomExceptions;
 using MassTransit;
 using Microsoft.Extensions.Logging;

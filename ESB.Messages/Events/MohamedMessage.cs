@@ -3,9 +3,9 @@ using Microsoft.Extensions.Primitives;
 
 namespace ESB.Messages.Events;
 
-public class TestEvent : ICoreMessage
+public class MohamedMessage : ICoreMessage
 {
-    public int Num { get; set; }
+    public string? Name { get; set; }
     public string? Authorization { get; set; }
     
 }

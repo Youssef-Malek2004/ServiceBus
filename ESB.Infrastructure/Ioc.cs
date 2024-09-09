@@ -1,11 +1,9 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using ESB.Configurations.Interfaces;
-using ESB.Configurations.Routes;
+using ESB.Application.Interfaces;
+using ESB.Domain.Entities.Routes;
 using ESB.ErrorHandling.CustomExceptions;
-using ESB.Infrastructure.Authorizers;
 using ESB.Infrastructure.Configurators;
-using ESB.Infrastructure.Consumers;
 using ESB.Infrastructure.ExceptionHandlers;
 using ESB.Infrastructure.Factories;
 using ESB.Infrastructure.Services;
@@ -13,6 +11,7 @@ using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace ESB.Infrastructure;
 
@@ -36,11 +35,12 @@ public static class Ioc
         services.AddHttpClient();
         services.AddSingleton<ClientFactory>();
         services.AddSingleton<ConcurrentDictionary<EsbRoute, IAdapterDi>>();
+        services.AddSingleton<ConcurrentDictionary<EsbRoute, ResiliencePipeline>>();
         return services;
     }
 
     public static IServiceCollection ConfigureBus(this IServiceCollection services, ConfigurationManager configurationManager)
-    {
+    { 
         var serviceProvider = services.BuildServiceProvider();
         var loggerExceptionHandler = serviceProvider.GetRequiredService<ILogger<ExceptionHandlingMiddleware>>();
         var loggerConsumerObserver = serviceProvider.GetRequiredService<ILogger<GlobalConsumerObserver>>();
@@ -59,36 +59,37 @@ public static class Ioc
                         if (route.ReceiveLocation?.MessageEndpoint is null) continue;
                         if (route.ReceiveLocation.MessageEndpoint.EventType == null)
                             throw new MissingConfigurationException("Missing Event Type", route.Id);
-                        ;
-                        if (route.ReceiveLocation.MessageEndpoint.ResponseType == null)
+                        
+                        if (route.ReceiveLocation.MessageEndpoint.CallbackResponseType == null)
                             throw new MissingConfigurationException("Missing Response Type", route.Id);
-                        ;
+                        
                         if (route.ReceiveLocation.MessageEndpoint.Assembly == null)
                             throw new MissingConfigurationException("Missing Assembly", route.Id);
                         var currentAssembly = Assembly.Load(route.ReceiveLocation.MessageEndpoint.Assembly);
                         var myEventType = currentAssembly.GetType(route.ReceiveLocation.MessageEndpoint.EventType);
                         var myResponseType =
-                            currentAssembly.GetType(route.ReceiveLocation.MessageEndpoint.ResponseType);
+                            currentAssembly.GetType(route.ReceiveLocation.MessageEndpoint.CallbackResponseType);
 
                         if (myEventType == null || myResponseType == null)
                             throw new MajorConfigurationException("Can't Find Event or Response Type in Assembly");
                         var busConsumer = ConsumerFactory.Create(myEventType, myResponseType);
 
-                        busConfigurator.AddConsumer(busConsumer);
+                        busConfigurator.AddConsumer(busConsumer); 
                     }
-                //busConfigurator.AddConsumer<TestConsumer>(); //Testing the Consumer for Response Message -> Published Successfully
 
                 busConfigurator.UsingRabbitMq((context, configurator) =>
                 {
                     configurator.ConnectConsumeObserver(new GlobalConsumerObserver(loggerConsumerObserver));
+                    
+                    configurator.ClearSerialization();
+                    configurator.UseRawJsonSerializer();
 
                     configurator.Host(new Uri(configurationManager["MessageBroker:Host"]!), h =>
                     {
                         h.Username(configurationManager["MessageBroker:Username"]!);
                         h.Password(configurationManager[
-                            "MessageBroker:Password"]!); //ToDo Change this to be included in the routes config
+                            "MessageBroker:Password"]!);
                     });
-
                     configurator.ConfigureEndpoints(context);
                 });
             });

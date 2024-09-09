@@ -1,5 +1,5 @@
-using ESB.Configurations.Interfaces;
-using ESB.Configurations.Routes;
+using ESB.Application.Interfaces;
+using ESB.Domain.Entities.Routes;
 using ESB.Infrastructure.Clients;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +11,7 @@ public class ClientFactory
     {
         if (sendLocation?.HttpEndpoint is not null)
         {
-            return new HttpApiClient(httpClientFactory, logger, authorizer); //ToDo pass the correct Authorizer
+            return new HttpApiClient(httpClientFactory, logger);
         }
         else if (sendLocation?.FtpEndpoint is not null)
         {

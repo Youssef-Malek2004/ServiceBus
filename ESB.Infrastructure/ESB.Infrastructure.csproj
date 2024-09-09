@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ESB.Configurations\ESB.Configurations.csproj" />
+      <ProjectReference Include="..\ESB.Application\ESB.Application.csproj" />
       <ProjectReference Include="..\ESB.ErrorHandling\ESB.ErrorHandling.csproj" />
       <ProjectReference Include="..\ESB.Messages\ESB.Messages.csproj" />
     </ItemGroup>
@@ -21,6 +21,7 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Resilience" Version="8.0.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 

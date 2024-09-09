@@ -1,6 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using ESB.Mockup.AuthenticationHandlers;
+using ESB.Mockup.CustomMiddlewares;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -126,6 +129,22 @@ app.MapGet("/orders", [Authorize] async (HttpContext context) =>
     };
 
     await context.Response.WriteAsJsonAsync(orders);
+});
+
+app.MapGet("/getNum", async (HttpResponse response, HttpContext context) =>
+{
+    await context.Response.WriteAsJsonAsync(new
+    {
+        Num = 5
+    });
+}); 
+
+app.MapGet("/getString", [Authorize]async (HttpResponse response, HttpContext context) =>
+{
+    await context.Response.WriteAsJsonAsync(new
+    {
+        Name = "Malek"
+    });
 });
 
 app.Run();

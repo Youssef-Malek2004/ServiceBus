@@ -1,8 +1,11 @@
 using System.Collections.Concurrent;
-using ESB.Configurations.Interfaces;
-using ESB.Configurations.Routes;
+using System.Net.Http.Headers;
+using ESB.Application.Interfaces;
+using ESB.Domain.Entities.Routes;
 using ESB.Infrastructure.Adapters;
 using ESB.Infrastructure.Services;
+using Microsoft.Extensions.Primitives;
+using Polly;
 
 namespace ESB.Core.Middlewares;
 
@@ -10,7 +13,8 @@ public static class HelperMiddlewares
 {
     public static void AddHttpEndpoints(IApplicationBuilder app,
         RoutesConfigurationService routesConfigurationService,
-        ConcurrentDictionary<EsbRoute, IAdapterDi> adapterDictionary)
+        ConcurrentDictionary<EsbRoute, IAdapterDi> adapterDictionary,
+        ConcurrentDictionary<EsbRoute, ResiliencePipeline> resiliencyDictionary)
     {
         app.UseEndpoints(endpoints =>
         {
@@ -23,6 +27,8 @@ public static class HelperMiddlewares
                 var receiveLocation = route.ReceiveLocation.HttpEndpoint;
                 var method = receiveLocation.Method?.ToUpperInvariant();
 
+                resiliencyDictionary.TryGetValue(route, out var resiliencePipeline);
+
                 if (method == null) continue;
 
                 switch (method)
@@ -31,10 +37,17 @@ public static class HelperMiddlewares
                         endpoints.MapGet($"/{receiveLocation.EndpointName}",
                             async (HttpContext context, HttpResponse response) =>
                             {
+                                StringValues test = context.Request.Headers.Authorization;
                                 adapterDictionary.TryGetValue(route, out var adapter);
                                 if (adapter is HttpAdapter httpAdapter)
                                 {
-                                    await httpAdapter.HandleIncomingRequest(context);
+                                    if (resiliencePipeline != null)
+                                        await resiliencePipeline.ExecuteAsync(async cancellationToken =>
+                                            await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization));
+                                    else
+                                    {
+                                        await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization);
+                                    }
                                 }
                             });
                         break;
@@ -46,7 +59,13 @@ public static class HelperMiddlewares
                                 adapterDictionary.TryGetValue(route, out var adapter);
                                 if (adapter is HttpAdapter httpAdapter)
                                 {
-                                    await httpAdapter.HandleIncomingRequest(context);
+                                    if (resiliencePipeline != null)
+                                        await resiliencePipeline.ExecuteAsync(async cancellationToken =>
+                                            await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization));
+                                    else
+                                    {
+                                        await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization);
+                                    }
                                 }
                             });
                         break;
@@ -58,7 +77,13 @@ public static class HelperMiddlewares
                                 adapterDictionary.TryGetValue(route, out var adapter);
                                 if (adapter is HttpAdapter httpAdapter)
                                 {
-                                    await httpAdapter.HandleIncomingRequest(context);
+                                    if (resiliencePipeline != null)
+                                        await resiliencePipeline.ExecuteAsync(async cancellationToken =>
+                                            await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization));
+                                    else
+                                    {
+                                        await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization);
+                                    }
                                 }
                             });
                         break;
@@ -70,7 +95,13 @@ public static class HelperMiddlewares
                                 adapterDictionary.TryGetValue(route, out var adapter);
                                 if (adapter is HttpAdapter httpAdapter)
                                 {
-                                    await httpAdapter.HandleIncomingRequest(context);
+                                    if (resiliencePipeline != null)
+                                        await resiliencePipeline.ExecuteAsync(async cancellationToken =>
+                                            await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization));
+                                    else
+                                    {
+                                        await httpAdapter.HandleIncomingRequest(context, context.Request.Headers.Authorization);
+                                    }
                                 }
                             });
                         break;
