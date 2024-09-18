@@ -8,8 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ESB.Application\ESB.Application.csproj" />
-      <ProjectReference Include="..\ESB.ErrorHandling\ESB.ErrorHandling.csproj" />
-      <ProjectReference Include="..\ESB.Messages\ESB.Messages.csproj" />
+      <ProjectReference Include="..\ESB.Contracts\ESB.Contracts.csproj" />
     </ItemGroup>
 
     <ItemGroup>

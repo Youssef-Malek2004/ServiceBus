@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using ESB.Application.Interfaces;
-using ESB.Domain.Entities.Routes;
+using ESB.Application.Routes;
 using ESB.Infrastructure.Factories;
 using ESB.Infrastructure.Services;
 using Polly;

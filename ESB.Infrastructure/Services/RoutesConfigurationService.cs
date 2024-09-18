@@ -1,4 +1,4 @@
-using ESB.Domain.Entities.Routes;
+using ESB.Application.Routes;
 
 namespace ESB.Infrastructure.Services;
 

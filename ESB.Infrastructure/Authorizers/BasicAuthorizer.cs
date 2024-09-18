@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using ESB.Application.Interfaces;
-using ESB.Domain.Entities.Routes;
+using ESB.Application.Routes;
 
 namespace ESB.Infrastructure.Authorizers;
 

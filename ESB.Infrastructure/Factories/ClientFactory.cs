@@ -1,5 +1,5 @@
 using ESB.Application.Interfaces;
-using ESB.Domain.Entities.Routes;
+using ESB.Application.Routes;
 using ESB.Infrastructure.Clients;
 using Microsoft.Extensions.Logging;
 

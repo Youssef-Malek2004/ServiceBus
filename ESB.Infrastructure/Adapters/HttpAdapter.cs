@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
+using ESB.Application.CustomExceptions;
 using ESB.Application.Interfaces;
-using ESB.Domain.Entities.Routes;
-using ESB.ErrorHandling.CustomExceptions;
+using ESB.Application.Routes;
 using ESB.Infrastructure.Factories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;

@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using ESB.Application.CustomExceptions;
 using ESB.Application.Interfaces;
-using ESB.Domain.Entities.Routes;
-using ESB.ErrorHandling.CustomExceptions;
+using ESB.Application.Routes;
 using ESB.Infrastructure.Clients;
 
 namespace ESB.Infrastructure.Authorizers;

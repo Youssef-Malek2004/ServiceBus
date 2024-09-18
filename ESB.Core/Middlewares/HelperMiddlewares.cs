@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using ESB.Application.Interfaces;
-using ESB.Domain.Entities.Routes;
+using ESB.Application.Routes;
 using ESB.Infrastructure.Adapters;
 using ESB.Infrastructure.Services;
 using Microsoft.Extensions.Primitives;

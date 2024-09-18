@@ -1,4 +1,4 @@
-using ESB.ErrorHandling.CustomExceptions;
+using ESB.Application.CustomExceptions;
 using Microsoft.Extensions.Logging;
 
 namespace ESB.Infrastructure.ExceptionHandlers;

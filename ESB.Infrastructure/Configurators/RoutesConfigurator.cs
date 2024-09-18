@@ -1,6 +1,6 @@
+using ESB.Application.CustomExceptions;
 using ESB.Application.Interfaces;
-using ESB.Domain.Entities.Routes;
-using ESB.ErrorHandling.CustomExceptions;
+using ESB.Application.Routes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
