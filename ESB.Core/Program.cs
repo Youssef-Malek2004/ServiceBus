@@ -1,6 +1,9 @@
+using ESB.Application.Routes;
 using ESB.Core.Middlewares;
 using ESB.Infrastructure;
 using ESB.Infrastructure.ExceptionHandlers;
+using ESB.Infrastructure.Services;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog(((context, configuration) => 
     configuration.ReadFrom.Configuration(context.Configuration)));
 
-builder.Services.AddConfigurationService(); 
+builder.Services.AddConfigurationService(builder.Configuration); 
 
 builder.Services.AddRequiredComponents();
 builder.Services.ConfigureBus(builder.Configuration);
@@ -32,6 +35,11 @@ app.UseRouting();
 app.AddAdapters();
 app.AddResiliency();
 app.AddHttpReceiveEndpoints();
+
+app.MapGet("configTests", (IOptionsSnapshot<ConfiguredRoutes> routesConfigurationService) =>
+{
+    return Results.Ok(routesConfigurationService.Value.Routes[0].Id);
+});
 
 
 app.Run();

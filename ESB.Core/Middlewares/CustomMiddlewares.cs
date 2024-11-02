@@ -3,6 +3,8 @@ using ESB.Application.Interfaces;
 using ESB.Application.Routes;
 using ESB.Infrastructure.Factories;
 using ESB.Infrastructure.Services;
+using MassTransit.Configuration;
+using Microsoft.Extensions.Options;
 using Polly;
 using Polly.RateLimiting;
 using Polly.Retry;
@@ -13,7 +15,8 @@ public static class CustomMiddlewares
 {
     public static IApplicationBuilder AddHttpReceiveEndpoints(this IApplicationBuilder app)
     {
-        var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        // var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        var routesConfigurationService = app.ApplicationServices.GetRequiredService<IOptions<ConfiguredRoutes>>();
         var adapterDictionary = app.ApplicationServices.GetRequiredService<ConcurrentDictionary<EsbRoute, IAdapterDi>>();
         var resiliencyDictionary = app.ApplicationServices.GetRequiredService<ConcurrentDictionary<EsbRoute, ResiliencePipeline>>();
         HelperMiddlewares.AddHttpEndpoints(app, routesConfigurationService, adapterDictionary,resiliencyDictionary);
@@ -23,14 +26,15 @@ public static class CustomMiddlewares
 
     public static IApplicationBuilder AddAdapters(this IApplicationBuilder app)
     {
-        var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        // var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        var routesConfigurationService = app.ApplicationServices.GetRequiredService<IOptions<ConfiguredRoutes>>();
         var httpClientFactory = app.ApplicationServices.GetRequiredService<IHttpClientFactory>();
         var clientFactory = app.ApplicationServices.GetRequiredService<ClientFactory>();
         var adapterDictionary = app.ApplicationServices.GetRequiredService<ConcurrentDictionary<EsbRoute, IAdapterDi>>();
         var adapterLogger = app.ApplicationServices.GetRequiredService<ILogger<IAdapterDi>>();
         
-        if (routesConfigurationService.RoutesConfiguration.Routes == null) return app;
-        foreach (var route in routesConfigurationService.RoutesConfiguration.Routes)
+        if (routesConfigurationService.Value.Routes == null) return app;
+        foreach (var route in routesConfigurationService.Value.Routes)
         {
             var clientAuthorizer = AuthorizerFactory.CreateAuthorizer(route.SendLocation, adapterLogger);
             var adapter = AdapterFactory.CreateAdapter(route, httpClientFactory, clientFactory, adapterLogger, clientAuthorizer);
@@ -42,11 +46,12 @@ public static class CustomMiddlewares
 
     public static IApplicationBuilder AddResiliency(this IApplicationBuilder app)
     {
-        var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        // var routesConfigurationService = app.ApplicationServices.GetRequiredService<RoutesConfigurationService>();
+        var routesConfigurationService = app.ApplicationServices.GetRequiredService<IOptions<ConfiguredRoutes>>();
         var resiliencyDictionary = app.ApplicationServices.GetRequiredService<ConcurrentDictionary<EsbRoute, ResiliencePipeline>>();
 
-        if (routesConfigurationService.RoutesConfiguration.Routes == null) return app;
-        foreach (var route in routesConfigurationService.RoutesConfiguration.Routes)
+        if (routesConfigurationService.Value.Routes == null) return app;
+        foreach (var route in routesConfigurationService.Value.Routes)
         {
             if(route.Settings?.RetryPolicy is null) continue;
             

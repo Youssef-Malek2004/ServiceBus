@@ -10,6 +10,7 @@ using MassTransit;
 using MassTransit.Internals;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Polly;
@@ -18,7 +19,7 @@ namespace ESB.Infrastructure.Consumers;
 
 public class BusConsumer<TMessage, TResponse>(
     IPublishEndpoint publishEndpoint,
-    RoutesConfigurationService routesConfigurationService,
+    IOptions<ConfiguredRoutes> routesConfigurationService,
     ConcurrentDictionary<EsbRoute, IAdapterDi> adapterDictionary,
     ConcurrentDictionary<EsbRoute, ResiliencePipeline> resilienceDictionary,
     ILogger<BusConsumer<TMessage, TResponse>> logger)
@@ -33,8 +34,8 @@ public class BusConsumer<TMessage, TResponse>(
             context.Message,
             DateTime.UtcNow);
         
-        if (routesConfigurationService.RoutesConfiguration.Routes != null && EsbRoute is null)
-            foreach (var route in routesConfigurationService.RoutesConfiguration.Routes.Where(route => route.ReceiveLocation?.MessageEndpoint is not null))
+        if (routesConfigurationService.Value.Routes != null && EsbRoute is null)
+            foreach (var route in routesConfigurationService.Value.Routes.Where(route => route.ReceiveLocation?.MessageEndpoint is not null))
             {
                 if(route.ReceiveLocation?.MessageEndpoint?.EventType is null)
                         throw new MissingConfigurationException("Event Type Empty/Missing", route.Id);

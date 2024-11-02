@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Reflection;
 using ESB.Application.CustomExceptions;
 using ESB.Application.Interfaces;
@@ -11,21 +12,25 @@ using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Polly;
 
 namespace ESB.Infrastructure;
 
 public static class Ioc
 {
-    public static IServiceCollection AddConfigurationService(this IServiceCollection services)
+    public static IServiceCollection AddConfigurationService(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<IConfigurator<ConfiguredRoutes>, RoutesConfigurator>();
-        services.AddSingleton(provider =>
-        {
-            var routesConfigurator = provider.GetRequiredService<IConfigurator<ConfiguredRoutes>>();
-            var routesConfiguration = routesConfigurator.InitializeConfiguration();
-            return new RoutesConfigurationService(routesConfiguration);
-        });
+        services.Configure<ConfiguredRoutes>(
+            configuration.GetSection("BusConfiguration"));
+        
+        // services.AddTransient<IConfigurator<ConfiguredRoutes>, RoutesConfigurator>();
+        // services.AddTransient(provider =>
+        // {
+        //     var routesConfigurator = provider.GetRequiredService<IConfigurator<ConfiguredRoutes>>();
+        //     var routesConfiguration = routesConfigurator.InitializeConfiguration();
+        //     return new RoutesConfigurationService(routesConfiguration);
+        // });
         
         return services;
     }
@@ -47,14 +52,15 @@ public static class Ioc
 
         try
         {
-            var routesConfigService = serviceProvider.GetRequiredService<RoutesConfigurationService>();
+            // var routesConfigService = serviceProvider.GetRequiredService<RoutesConfigurationService>();
+            var routesConfigService = serviceProvider.GetRequiredService<IOptions<ConfiguredRoutes>>();
 
             services.AddMassTransit(busConfigurator =>
             {
                 busConfigurator.SetKebabCaseEndpointNameFormatter();
 
-                if (routesConfigService.RoutesConfiguration.Routes != null)
-                    foreach (var route in routesConfigService.RoutesConfiguration.Routes)
+                if (routesConfigService.Value.Routes != null)
+                    foreach (var route in routesConfigService.Value.Routes)
                     {
                         if (route.ReceiveLocation?.MessageEndpoint is null) continue;
                         if (route.ReceiveLocation.MessageEndpoint.EventType == null)

@@ -4,6 +4,7 @@ using ESB.Application.Interfaces;
 using ESB.Application.Routes;
 using ESB.Infrastructure.Adapters;
 using ESB.Infrastructure.Services;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Polly;
 
@@ -12,15 +13,15 @@ namespace ESB.Core.Middlewares;
 public static class HelperMiddlewares
 {
     public static void AddHttpEndpoints(IApplicationBuilder app,
-        RoutesConfigurationService routesConfigurationService,
+        IOptions<ConfiguredRoutes> routesConfigurationService,
         ConcurrentDictionary<EsbRoute, IAdapterDi> adapterDictionary,
         ConcurrentDictionary<EsbRoute, ResiliencePipeline> resiliencyDictionary)
     {
         app.UseEndpoints(endpoints =>
         {
-            if (routesConfigurationService.RoutesConfiguration.Routes == null) return;
+            if (routesConfigurationService.Value.Routes == null) return;
 
-            foreach (var route in routesConfigurationService.RoutesConfiguration.Routes)
+            foreach (var route in routesConfigurationService.Value.Routes)
             {
                 if (route.ReceiveLocation?.HttpEndpoint is null) continue;
 

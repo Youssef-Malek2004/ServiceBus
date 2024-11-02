@@ -4,7 +4,7 @@ namespace ESB.Infrastructure.Services;
 
 public class RoutesConfigurationService
 {
-    public ConfiguredRoutes RoutesConfiguration { get; private set; }
+    public ConfiguredRoutes RoutesConfiguration { get; set; }
 
     public RoutesConfigurationService(ConfiguredRoutes routesConfiguration)
     {
